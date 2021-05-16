@@ -61,23 +61,26 @@ function App() {
   }
 
   function handleAddSubTask(aTask) {
-    console.log(subName, aTask);
     const updatedTask = task.map(item =>
       (item.name === aTask.name ? { ...item, subTasks: [...item.subTasks, { name: subName, isDone: false }] } : item));
     setTask(updatedTask);
     setSubName('');
   }
 
-  function handleRemoveSubTask(name) {
-    let newSubTask = task.map(item =>
-      item.subTasks.filter(element => element.name !== name))
-
+  function handleRemoveSubTask(taskName, subTaskName, i) {
+    let { subTasks } = task[i]
+    let newSubTask = subTasks.filter(subTask => subTask.name !== subTaskName)
     const updatedTask = task.map(item =>
-      ({ ...item, subTasks: [...newSubTask] }))
+      (item.name === taskName ? { ...item, subTasks: newSubTask } : item));
     setTask(updatedTask);
   }
 
-  function doneSubTask(name) {
+  function done_undoSubTask(taskName, subTaskName, i, state) {
+    let { subTasks } = task[i]
+    let newSubTask = subTasks.map(subTask => subTask.name === subTaskName ? { ...subTask, isDone: state } : subTask)
+    const updatedTask = task.map(item =>
+      (item.name === taskName ? { ...item, subTasks: newSubTask } : item));
+    setTask(updatedTask);
   }
 
   return (
@@ -87,7 +90,7 @@ function App() {
         <Button type="primary" onClick={handleAddTask}>Create Task</Button>
       </Space>
       <Space direction="vertical" style={{ marginTop: 24 }}>
-        {task && task.map(aTask => (
+        {task && task.map((aTask, i) => (
           <Card
             key={aTask.name}
             title={aTask.name}
@@ -103,19 +106,19 @@ function App() {
           >
             <Space direction="vertical" style={{ width: "100%" }}>
               <Space>
-                <Input placeholder="Enter Subtask Name" style={{ width: 400 }} value={subName} onChange={handleChangeSubTask} />
+                <Input key={`input-sub-${aTask.name}`} placeholder="Enter Subtask Name" style={{ width: 400 }} value={subName} onChange={handleChangeSubTask} />
                 <Button type="primary" onClick={() => handleAddSubTask(aTask)}>Add Subtask</Button>
               </Space>
               <Divider />
               {aTask && aTask.subTasks && aTask.subTasks.map((aSubTask, index) => (
                 <Row key={`row-${index}`}>
                   <Col span={16}>
-                    <Typography.Text >{aSubTask.name}</Typography.Text>
+                    <Typography.Text style={aSubTask.isDone && { textDecoration: "line-through" }}>{aSubTask.name}</Typography.Text>
                   </Col>
                   <Col span={8}>
-                    {!aSubTask.isDone && <Button key={`b-done-${index}`} type="primary" onClick={() => doneSubTask(aSubTask.name)}>Done</Button>}{" "}
-                    {aSubTask.isDone && <Button key={`b-delete-${index}`} type="primary">Undo</Button>}{" "}
-                    <Button type="danger" onClick={() => handleRemoveSubTask(aSubTask.name)}>Delete</Button>
+                    {!aSubTask.isDone && <Button key={`b-done-${index}`} type="primary" onClick={() => done_undoSubTask(aTask.name, aSubTask.name, i, true)}>Done</Button>}{" "}
+                    {aSubTask.isDone && <Button key={`b-delete-${index}`} type="primary" onClick={() => done_undoSubTask(aTask.name, aSubTask.name, i, false)}>Undo</Button>}{" "}
+                    <Button type="danger" onClick={() => handleRemoveSubTask(aTask.name, aSubTask.name, i)}>Delete</Button>
                   </Col>
                 </Row>
               ))}
